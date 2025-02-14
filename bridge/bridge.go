@@ -347,11 +347,17 @@ func (s *Bridge) SendLinkInfo(clientId int, link *conn.Link, t *file.Tunnel) (ta
 		//If ip is restricted to do ip verification
 		if s.ipVerify {
 			ip := common.GetIpByAddr(link.RemoteAddr)
-			if v, ok := s.Register.Load(ip); !ok {
-				return nil, errors.New(fmt.Sprintf("The ip %s is not in the validation list", ip))
-			} else {
-				if !v.(time.Time).After(time.Now()) {
-					return nil, errors.New(fmt.Sprintf("The validity of the ip %s has expired", ip))
+			var isLocal = false
+			if ip == "127.0.0.1" {
+				isLocal = true
+			}
+			if !isLocal {
+				if v, ok := s.Register.Load(ip); !ok {
+					return nil, errors.New(fmt.Sprintf("The ip %s is not in the validation list", ip))
+				} else {
+					if !v.(time.Time).After(time.Now()) {
+						return nil, errors.New(fmt.Sprintf("The validity of the ip %s has expired", ip))
+					}
 				}
 			}
 		}
